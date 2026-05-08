@@ -2,7 +2,15 @@
   const config = window.coupleConfig;
   const storageKeys = {
     unlocked: "our-days-unlocked",
+    brandLit: "our-days-brand-lit",
+    litWishes: "our-days-lit-wishes",
   };
+  const calendarYears = Array.isArray(config.calendar.years) && config.calendar.years.length
+    ? config.calendar.years
+    : [config.calendar.initialYear || config.calendar.year || new Date().getFullYear()];
+  let activeCalendarYear = calendarYears.includes(config.calendar.initialYear)
+    ? config.calendar.initialYear
+    : calendarYears[0];
 
   const icons = {
     paw:
@@ -29,6 +37,7 @@
     gateMessage: $("#gateMessage"),
     site: $("#site"),
     brandLoveButton: $("#brandLoveButton"),
+    brandMark: $(".brand-mark"),
     brandName: $("#brandName"),
     heroEyebrow: $("#heroEyebrow"),
     heroTitle: $("#heroTitle"),
@@ -65,6 +74,10 @@
   function parseLocalDate(date) {
     const [year, month, day] = String(date).split("-").map(Number);
     return new Date(year, month - 1, day);
+  }
+
+  function calendarYearIndex(year = activeCalendarYear) {
+    return Math.max(0, calendarYears.indexOf(year));
   }
 
   function startOfToday(now = new Date()) {
@@ -105,6 +118,83 @@
       return `每年 ${moment.month} 月 ${moment.day} 日`;
     }
     return formatDate(moment.date);
+  }
+
+  function cleanMomentLabel(title) {
+    return String(title)
+      .replace(/已经/g, "")
+      .replace(/还剩/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function normalizeCalendarMark(mark, year) {
+    if (mark.year && Number(mark.year) !== Number(year)) return null;
+    if (!mark.month || !mark.day || !mark.label) return null;
+    return {
+      label: mark.label,
+      month: Number(mark.month),
+      day: Number(mark.day),
+      dayText: mark.dayText || pad(mark.day),
+      tone: mark.tone || "rose",
+      kind: mark.kind || "private",
+    };
+  }
+
+  function collectCalendarMarks(year) {
+    const marks = [];
+    const seen = new Set();
+    const addMark = (mark) => {
+      const normalized = normalizeCalendarMark(mark, year);
+      if (!normalized) return;
+      const key = `${normalized.month}-${normalized.dayText}-${normalized.label}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      marks.push(normalized);
+    };
+
+    (config.calendar.featured || []).forEach(addMark);
+    ((config.calendar.festivalsByYear || {})[year] || []).forEach(addMark);
+    ((config.calendar.officialHolidayArrangementsByYear || {})[year] || []).forEach(addMark);
+    config.anniversaries.forEach((moment) => {
+      if (moment.type === "yearly") {
+        addMark({
+          label: cleanMomentLabel(moment.title),
+          month: moment.month,
+          day: moment.day,
+          tone: moment.tone,
+          kind: "moment",
+        });
+        return;
+      }
+
+      if (!moment.date) return;
+      const date = parseLocalDate(moment.date);
+      if (date.getFullYear() !== Number(year)) return;
+      addMark({
+        label: cleanMomentLabel(moment.title),
+        month: date.getMonth() + 1,
+        day: date.getDate(),
+        tone: moment.tone,
+        kind: "moment",
+      });
+    });
+
+    marks.sort((a, b) => a.month - b.month || a.day - b.day || a.label.localeCompare(b.label, "zh-CN"));
+    return marks;
+  }
+
+  function getLitWishIds() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(storageKeys.litWishes) || "[]");
+      return new Set(Array.isArray(stored) ? stored : []);
+    } catch (error) {
+      return new Set();
+    }
+  }
+
+  function saveLitWishIds(ids) {
+    localStorage.setItem(storageKeys.litWishes, JSON.stringify(Array.from(ids)));
   }
 
   function digitClass(value) {
@@ -154,15 +244,28 @@
     setDigitClass(refs.daysCard, parts.days);
   }
 
-  function renderCalendar() {
+  function renderCalendar(year = activeCalendarYear) {
+    activeCalendarYear = calendarYears.includes(year) ? year : calendarYears[0];
+    const yearIndex = calendarYearIndex(activeCalendarYear);
+    const previousYear = calendarYears[yearIndex - 1];
+    const nextYear = calendarYears[yearIndex + 1];
+    const marks = collectCalendarMarks(activeCalendarYear);
     const marksByMonth = new Map();
-    config.calendar.featured.forEach((event) => {
+    marks.forEach((event) => {
       const key = String(event.month);
       if (!marksByMonth.has(key)) marksByMonth.set(key, []);
       marksByMonth.get(key).push(event);
     });
+    const pendingNotice = (config.calendar.pendingNoticeByYear || {})[activeCalendarYear];
+    const holidayCount = marks.filter((mark) => mark.kind === "holiday").length;
+    const festivalCount = marks.filter((mark) => mark.kind === "festival").length;
+    const yearNote = holidayCount
+      ? `${activeCalendarYear} 年节日日期和官方放假调休都已标记。`
+      : festivalCount
+        ? pendingNotice || `${activeCalendarYear} 年节日日期已标出。`
+        : `${activeCalendarYear} 年暂时只显示我们的纪念日。`;
 
-    refs.calendarBoard.innerHTML = Array.from({ length: 12 }, (_, index) => {
+    const months = Array.from({ length: 12 }, (_, index) => {
       const month = index + 1;
       const marks = marksByMonth.get(String(month)) || [];
       return `
@@ -174,8 +277,8 @@
                 ? marks
                     .map(
                       (mark) => `
-                        <span class="date-pill tone-${mark.tone}">
-                          <b>${pad(mark.day)}</b>${escapeHtml(mark.label)}
+                        <span class="date-pill tone-${mark.tone} kind-${mark.kind}">
+                          <b>${escapeHtml(mark.dayText)}</b>${escapeHtml(mark.label)}
                         </span>
                       `,
                     )
@@ -186,6 +289,23 @@
         </article>
       `;
     }).join("");
+
+    refs.calendarBoard.innerHTML = `
+      <div class="calendar-year-switcher" aria-label="切换日历年份">
+        <button class="calendar-nav" type="button" data-calendar-year="${previousYear || ""}" ${previousYear ? "" : "disabled"} aria-label="上一年">‹</button>
+        <strong>${activeCalendarYear}</strong>
+        <button class="calendar-nav" type="button" data-calendar-year="${nextYear || ""}" ${nextYear ? "" : "disabled"} aria-label="下一年">›</button>
+      </div>
+      <p class="calendar-year-note">${escapeHtml(yearNote)}</p>
+      <div class="calendar-months">${months}</div>
+    `;
+
+    refs.calendarBoard.querySelectorAll("[data-calendar-year]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const targetYear = Number(button.dataset.calendarYear);
+        if (targetYear) renderCalendar(targetYear);
+      });
+    });
   }
 
   function renderMoments(now = new Date()) {
@@ -239,19 +359,41 @@
   }
 
   function renderWishes() {
+    const litWishIds = getLitWishIds();
     refs.wishList.innerHTML = config.defaultWishes
       .map(
         (wish) => `
           <li>
-            <span class="wish-item">
-              <span class="wish-heart" aria-hidden="true">♡</span>
+            <button class="wish-item ${litWishIds.has(wish.id) ? "is-lit" : ""}" type="button" data-wish-id="${escapeHtml(wish.id)}" aria-pressed="${litWishIds.has(wish.id) ? "true" : "false"}">
+              <span class="wish-heart" aria-hidden="true">${litWishIds.has(wish.id) ? "♥" : "♡"}</span>
               <span>${escapeHtml(wish.text)}</span>
-            </span>
+            </button>
           </li>
         `,
       )
       .join("");
+    setupWishInteractions();
     hydrateInteractive();
+  }
+
+  function setupWishInteractions() {
+    refs.wishList.querySelectorAll(".wish-item").forEach((button) => {
+      button.addEventListener("click", () => {
+        const litWishIds = getLitWishIds();
+        const wishId = button.dataset.wishId;
+        const isLit = !litWishIds.has(wishId);
+        if (isLit) {
+          litWishIds.add(wishId);
+        } else {
+          litWishIds.delete(wishId);
+        }
+        saveLitWishIds(litWishIds);
+        button.classList.toggle("is-lit", isLit);
+        button.setAttribute("aria-pressed", String(isLit));
+        const heart = button.querySelector(".wish-heart");
+        if (heart) heart.textContent = isLit ? "♥" : "♡";
+      });
+    });
   }
 
   function addRipple(element, event) {
@@ -308,12 +450,13 @@
 
   function showBrandBurst(event) {
     event.preventDefault();
-    const words = ["幸福 +1", "喜欢 +1", "今日份心动", "抱抱 +1"];
+    setBrandLit(true);
+    const words = ["♥", "喜欢 +1", "✦"];
     const rect = refs.brandLoveButton.getBoundingClientRect();
-    for (let index = 0; index < 5; index += 1) {
+    for (let index = 0; index < 3; index += 1) {
       const pop = document.createElement("span");
       pop.className = "brand-pop";
-      pop.textContent = index === 0 ? words[Math.floor(Math.random() * words.length)] : "♡";
+      pop.textContent = words[index];
       const x = rect.left + rect.width * (0.28 + Math.random() * 0.48);
       const y = rect.top + rect.height * (0.28 + Math.random() * 0.42);
       pop.style.left = `${x}px`;
@@ -323,6 +466,15 @@
       pop.style.animationDelay = `${index * 36}ms`;
       document.body.appendChild(pop);
       window.setTimeout(() => pop.remove(), 980);
+    }
+  }
+
+  function setBrandLit(isLit) {
+    refs.brandLoveButton.classList.toggle("is-lit", isLit);
+    refs.brandLoveButton.setAttribute("aria-pressed", String(isLit));
+    refs.brandMark.textContent = isLit ? "♥" : "♡";
+    if (isLit) {
+      localStorage.setItem(storageKeys.brandLit, "true");
     }
   }
 
@@ -360,6 +512,7 @@
   }
 
   function setupBrandLove() {
+    setBrandLit(localStorage.getItem(storageKeys.brandLit) === "true");
     refs.brandLoveButton.addEventListener("click", showBrandBurst);
   }
 
