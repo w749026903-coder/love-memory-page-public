@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="小朱和婧婧大王的纪念日倒计时网页，记录在一起的时间、纪念日、回忆和心愿。"
+    />
+    <title>我们的纪念日</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="warm-pattern" aria-hidden="true"></div>
+
+    <section class="gate" id="gate" aria-label="纪念暗号">
+      <div class="gate-backdrop"></div>
+      <form class="gate-panel soft-glass" id="gateForm">
+        <p class="eyebrow">FOR OUR DAYS</p>
+        <h1 class="romantic-title">给我们的小窝</h1>
+        <p class="gate-copy">输入只属于我们的纪念暗号，打开这本会发光的日历。</p>
+        <label class="gate-label" for="passwordInput">纪念暗号</label>
+        <div class="gate-input-row">
+          <input
+            id="passwordInput"
+            name="password"
+            type="password"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="输入暗号"
+            aria-describedby="gateMessage"
+          />
+          <button class="interactive-liquid" type="submit">进入</button>
+        </div>
+        <p class="gate-message" id="gateMessage" role="status"></p>
+      </form>
+    </section>
+
+    <main class="site is-locked" id="site">
+      <header class="hero" aria-label="首页">
+        <div class="hero-media" aria-hidden="true">
+          <div class="handdrawn-scene hero-doodle">
+            <svg viewBox="0 0 760 520" aria-hidden="true">
+              <path class="draw-line slow" d="M88 394c132 42 430 42 584 0" />
+              <path class="draw-line soft" d="M78 132c72-36 160-35 232-7 90 35 146 14 216-16 50-21 112-15 154 13" />
+              <g class="calendar-drawn">
+                <path class="draw-line" d="M285 205h168c15 0 26 12 26 27v122c0 15-11 26-26 26H285c-15 0-26-11-26-26V232c0-15 11-27 26-27Z" />
+                <path class="draw-line" d="M259 260h220" />
+                <path class="draw-line" d="M310 182v47M429 182v47" />
+                <path class="draw-line thin" d="M302 294h140M302 330h140M350 275v82M397 275v82" />
+                <path class="draw-heart" d="M372 341c-22-14-37-28-37-43 0-11 8-20 19-20 8 0 14 5 18 12 4-7 11-12 19-12 11 0 19 9 19 20 0 15-15 29-38 43Z" />
+              </g>
+              <g class="cat-drawn bob-one">
+                <path class="draw-line fill-cream" d="M184 270c-34 3-62 33-67 70-5 42 21 79 63 89 46 11 94-16 106-61 13-49-24-102-102-98Z" />
+                <path class="draw-line" d="M139 286l16-54 40 40M234 275l42-36-6 60" />
+                <path class="draw-line thin" d="M165 335c10 5 21 5 32 0M227 335c10 5 21 5 32 0" />
+                <path class="draw-line thin" d="M202 354c9 12 23 12 32 0" />
+                <path class="draw-line soft tail-wiggle" d="M116 363c-55 10-70-48-29-67 25-11 47 1 49 25" />
+              </g>
+              <g class="dog-drawn bob-two">
+                <path class="draw-line fill-cream" d="M537 270c-49-6-92 25-100 72-8 48 25 87 75 91 51 3 94-31 97-80 3-42-25-77-72-83Z" />
+                <path class="draw-line fill-sky ear-left" d="M456 301c-29-24-60-19-70 5-11 26 9 54 41 58" />
+                <path class="draw-line fill-sky ear-right" d="M583 301c29-24 60-19 70 5 11 26-9 54-41 58" />
+                <path class="draw-line thin" d="M494 337c10 5 21 5 32 0M555 337c10 5 21 5 32 0" />
+                <path class="draw-line thin" d="M529 356c9 13 23 13 32 0" />
+                <path class="draw-line soft tail-wag" d="M610 370c62-7 55-66 17-59-20 4-28 22-20 37" />
+              </g>
+              <g class="floating-hearts">
+                <path class="mini-heart h1" d="M150 155c-15-10-24-19-24-30 0-8 5-14 13-14 6 0 10 3 12 8 3-5 8-8 13-8 8 0 13 6 13 14 0 11-9 20-27 30Z" />
+                <path class="mini-heart h2" d="M610 170c-15-9-24-18-24-29 0-8 5-14 13-14 6 0 10 3 12 8 3-5 8-8 13-8 8 0 13 6 13 14 0 11-9 20-27 29Z" />
+                <path class="paw-dot p1" d="M665 252c7 0 12 5 12 12s-5 12-12 12-12-5-12-12 5-12 12-12Z" />
+                <path class="paw-dot p2" d="M112 222c7 0 12 5 12 12s-5 12-12 12-12-5-12-12 5-12 12-12Z" />
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <nav class="topbar" aria-label="页面导航">
+          <button class="brand interactive-liquid" id="brandLoveButton" type="button" aria-label="给今天加一点幸福">
+            <span class="brand-mark">♡</span>
+            <span id="brandName">Our Days</span>
+          </button>
+          <div class="nav-links">
+            <a class="interactive-liquid" href="#moments">纪念日</a>
+            <a class="interactive-liquid" href="#timeline">时间线</a>
+            <a class="interactive-liquid" href="#wishes">心愿</a>
+          </div>
+        </nav>
+
+        <section class="hero-content" id="home">
+          <p class="eyebrow" id="heroEyebrow">SINCE 2025.09.12</p>
+          <div class="hero-title-wrap">
+            <h1 class="hero-title romantic-title" id="heroTitle">我们已经在一起</h1>
+            <div class="hero-title-stickers" aria-hidden="true">
+              <img src="./assets/vendor/fluentui-emoji/cat_face_color.svg" alt="" />
+              <img src="./assets/vendor/fluentui-emoji/heart_with_arrow_color.svg" alt="" />
+              <img src="./assets/vendor/fluentui-emoji/dog_face_color.svg" alt="" />
+            </div>
+          </div>
+          <div class="love-clock" aria-label="在一起的时间">
+            <div class="clock-card soft-glass" id="daysCard">
+              <strong id="daysTogether">000</strong>
+              <span>天</span>
+            </div>
+            <div class="clock-card soft-glass">
+              <strong id="hoursTogether">00</strong>
+              <span>时</span>
+            </div>
+            <div class="clock-card soft-glass">
+              <strong id="minutesTogether">00</strong>
+              <span>分</span>
+            </div>
+            <div class="clock-card soft-glass">
+              <strong id="secondsTogether">00</strong>
+              <span>秒</span>
+            </div>
+          </div>
+          <p class="hero-note" id="heroNote">
+            从 2025 年 9 月 12 日开始，普通的日子也被认真收藏。
+          </p>
+          <div class="hero-actions">
+            <a class="primary-action interactive-liquid" href="#moments">看倒计时</a>
+            <a class="ghost-action interactive-liquid" href="#timeline">翻时间线</a>
+          </div>
+        </section>
+      </header>
+
+      <section class="section intro-band warm-section" aria-label="今日心情">
+        <div class="section-copy">
+          <p class="eyebrow">TODAY'S LITTLE NOTE</p>
+          <h2 class="romantic-title" id="letterTitle">把喜欢放进日历</h2>
+          <p class="script-note">Every ordinary day turns soft when it is with you.</p>
+          <p id="letterBody">
+            愿每一次靠近、每一次拥抱、每一个被记住的小日子，都在这里慢慢发光。
+          </p>
+        </div>
+        <div class="note-constellation" aria-hidden="true">
+          <span class="note-star note-star-one">09.12</span>
+          <span class="note-star note-star-two">520</span>
+          <span class="note-star note-star-three">1st</span>
+          <div class="orbit-heart">♡</div>
+        </div>
+      </section>
+
+      <section class="section moments-section" id="moments" aria-label="纪念日倒数">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">COUNTDOWN</p>
+            <h2 class="romantic-title">倒数纪念日</h2>
+          </div>
+          <p class="section-kicker">把会发光的日子，都贴到我们的日历上。</p>
+        </div>
+
+        <div class="moments-layout">
+          <aside class="anniversary-calendar calendar-panel" aria-label="我们的纪念日历">
+            <div class="calendar-art calendar-line-art" aria-hidden="true">
+              <svg viewBox="0 0 360 220">
+                <path class="draw-line" d="M62 62h236c13 0 24 11 24 24v86c0 13-11 24-24 24H62c-13 0-24-11-24-24V86c0-13 11-24 24-24Z" />
+                <path class="draw-line" d="M38 104h284" />
+                <path class="draw-line thin" d="M84 132h192M84 158h192M128 116v60M180 116v60M232 116v60" />
+                <path class="draw-heart pulse-heart" d="M180 166c-18-12-30-23-30-36 0-10 7-17 16-17 6 0 11 4 14 9 4-5 9-9 15-9 9 0 16 7 16 17 0 13-12 24-31 36Z" />
+              </svg>
+            </div>
+            <div class="calendar-content">
+              <p class="eyebrow">OUR CALENDAR</p>
+              <h3 class="romantic-title" id="calendarTitle">我们的纪念日历</h3>
+              <p id="calendarSubtitle">有些日子，应该被认真圈起来。</p>
+              <div class="calendar-board" id="calendarBoard"></div>
+            </div>
+          </aside>
+          <div class="moment-grid" id="momentGrid"></div>
+        </div>
+      </section>
+
+      <section class="section timeline-section" id="timeline" aria-label="回忆时间线">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">MEMORY LANE</p>
+            <h2 class="romantic-title">回忆时间线</h2>
+          </div>
+        </div>
+        <div class="timeline" id="timelineList"></div>
+      </section>
+
+      <section class="section wish-section" id="wishes" aria-label="心愿清单">
+        <div class="wish-card">
+          <div class="wish-copy">
+            <p class="eyebrow">WISHES</p>
+            <h2 class="romantic-title">小小心愿清单</h2>
+            <p>愿今天、明天、很多年后的同一天，都能被温柔地记住。</p>
+          </div>
+          <ul class="wish-list" id="wishList"></ul>
+          <div class="wish-sticker" aria-hidden="true">
+            <svg viewBox="0 0 220 180">
+              <path class="draw-line fill-cream" d="M66 90c-20-1-38 16-40 38-3 24 13 42 37 45 24 3 46-13 49-37 3-26-15-45-46-46Z" />
+              <path class="draw-line fill-cream" d="M145 88c-25-3-46 14-50 38-4 26 13 45 39 47 26 2 48-16 50-42 2-22-13-40-39-43Z" />
+              <path class="draw-heart pulse-heart" d="M109 72c-24-16-39-30-39-46 0-12 8-21 20-21 8 0 15 5 19 12 5-7 12-12 20-12 12 0 20 9 20 21 0 16-15 30-40 46Z" />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span id="footerText">Made for our days.</span>
+      </footer>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

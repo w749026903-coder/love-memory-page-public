@@ -1,0 +1,416 @@
+(function () {
+  const config = window.coupleConfig;
+  const storageKeys = {
+    unlocked: "our-days-unlocked",
+  };
+
+  const icons = {
+    paw:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.4 10.4c1.3 0 2.3-1.3 2.3-3S8.7 4.3 7.4 4.3 5.1 5.7 5.1 7.3s1 3.1 2.3 3.1Zm9.2 0c1.3 0 2.3-1.3 2.3-3s-1-3.1-2.3-3.1-2.3 1.4-2.3 3.1 1 3 2.3 3Zm-13.3 4c1.1.5 2.5-.2 3.2-1.6.7-1.4.4-3-.7-3.5-1.1-.6-2.5.1-3.2 1.5-.7 1.4-.4 3 .7 3.6Zm17.4 0c1.1-.6 1.4-2.2.7-3.6-.7-1.4-2.1-2.1-3.2-1.5-1.1.5-1.4 2.1-.7 3.5.7 1.4 2.1 2.1 3.2 1.6ZM12 11.7c-3.1 0-6 3-6 5.8 0 1.5 1.1 2.2 2.5 2.2 1.2 0 2.1-.7 3.5-.7s2.3.7 3.5.7c1.4 0 2.5-.7 2.5-2.2 0-2.8-2.9-5.8-6-5.8Z"/></svg>',
+    hug:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 9.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.6 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM4 20.6v-4.1a5 5 0 0 1 8-4 5 5 0 0 1 8 4v4.1H4Zm4.3-7.2a3 3 0 0 0-3 3v2.8h5.6v-2.8a3 3 0 0 0-2.6-3Zm7.4 0a3 3 0 0 0-2.6 3v2.8h5.6v-2.8a3 3 0 0 0-3-3Z"/></svg>',
+    heart:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.6-4.8-9.5-10.2C1.2 7 3.4 3.6 7.1 3.6c2 0 3.7 1.1 4.9 2.9 1.2-1.8 2.9-2.9 4.9-2.9 3.7 0 5.9 3.4 4.6 7.2C19.6 16.2 12 21 12 21Z"/></svg>',
+    spark:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2Zm6.1 11.8.9 2.5 2.5.9-2.5.9-.9 2.5-.9-2.5-2.5-.9 2.5-.9.9-2.5ZM5.8 14.2l1.1 3.1 3.1 1.1-3.1 1.1-1.1 3.1-1.1-3.1-3.1-1.1 3.1-1.1 1.1-3.1Z"/></svg>',
+    rose:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.1 3.3c3.2 0 5.7 2.1 5.7 4.8 0 2.5-2.1 4.5-4.9 4.8v2.4c2.3-.9 4.9-.5 7 1.2-2.5 2.3-5.4 2.7-7.8 1.2V22h-1.8v-4.3c-2.4 1.5-5.3 1.1-7.8-1.2 2.1-1.7 4.7-2.1 7-1.2v-2.4c-2.8-.4-4.9-2.4-4.9-4.8 0-2.7 2.4-4.8 5.7-4.8h1.8Z"/></svg>',
+    cake:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c1.1 1.2 1.7 2.3 1.7 3.3a1.7 1.7 0 1 1-3.4 0c0-1 .6-2.1 1.7-3.3ZM5.2 10.7h13.6a2 2 0 0 1 2 2v7.1H3.2v-7.1a2 2 0 0 1 2-2Zm.2 5.5v1.9h13.2v-1.9c-.8.4-1.7.4-2.5-.1a2.8 2.8 0 0 1-3.1 0 2.8 2.8 0 0 1-3.1 0 2.8 2.8 0 0 1-3.1 0c-.5.3-1 .4-1.4.1ZM8 7.3h8v2H8v-2Z"/></svg>',
+  };
+
+  const $ = (selector) => document.querySelector(selector);
+  let revealObserver;
+
+  const refs = {
+    gate: $("#gate"),
+    gateForm: $("#gateForm"),
+    passwordInput: $("#passwordInput"),
+    gateMessage: $("#gateMessage"),
+    site: $("#site"),
+    brandLoveButton: $("#brandLoveButton"),
+    brandName: $("#brandName"),
+    heroEyebrow: $("#heroEyebrow"),
+    heroTitle: $("#heroTitle"),
+    heroNote: $("#heroNote"),
+    daysCard: $("#daysCard"),
+    daysTogether: $("#daysTogether"),
+    hoursTogether: $("#hoursTogether"),
+    minutesTogether: $("#minutesTogether"),
+    secondsTogether: $("#secondsTogether"),
+    letterTitle: $("#letterTitle"),
+    letterBody: $("#letterBody"),
+    calendarTitle: $("#calendarTitle"),
+    calendarSubtitle: $("#calendarSubtitle"),
+    calendarBoard: $("#calendarBoard"),
+    momentGrid: $("#momentGrid"),
+    timelineList: $("#timelineList"),
+    wishList: $("#wishList"),
+    footerText: $("#footerText"),
+  };
+
+  function pad(value) {
+    return String(value).padStart(2, "0");
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function parseLocalDate(date) {
+    const [year, month, day] = String(date).split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  function startOfToday(now = new Date()) {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  function dayDiff(from, to) {
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.ceil((startOfToday(to) - startOfToday(from)) / msPerDay);
+  }
+
+  function nextYearlyDate(month, day, now = new Date()) {
+    const today = startOfToday(now);
+    let next = new Date(today.getFullYear(), month - 1, day);
+    if (next < today) {
+      next = new Date(today.getFullYear() + 1, month - 1, day);
+    }
+    return next;
+  }
+
+  function resolveMomentDate(moment, now = new Date()) {
+    if (moment.type === "yearly") {
+      return nextYearlyDate(moment.month, moment.day, now);
+    }
+    return parseLocalDate(moment.date);
+  }
+
+  function formatDate(date) {
+    if (typeof date === "string" && !date.includes("-")) {
+      return date;
+    }
+    const parsed = typeof date === "string" ? parseLocalDate(date) : date;
+    return `${parsed.getFullYear()}.${pad(parsed.getMonth() + 1)}.${pad(parsed.getDate())}`;
+  }
+
+  function formatMonthDay(moment) {
+    if (moment.type === "yearly") {
+      return `每年 ${moment.month} 月 ${moment.day} 日`;
+    }
+    return formatDate(moment.date);
+  }
+
+  function digitClass(value) {
+    const length = String(Math.abs(Number(value) || 0)).length;
+    if (length >= 5) return "digits-5";
+    if (length === 4) return "digits-4";
+    if (length === 3) return "digits-3";
+    return "digits-2";
+  }
+
+  function setDigitClass(element, value) {
+    element.classList.remove("digits-2", "digits-3", "digits-4", "digits-5");
+    element.classList.add(digitClass(value));
+  }
+
+  function getClockParts(now = new Date()) {
+    const start = new Date(config.startedAt);
+    const total = Math.max(0, now - start);
+    const totalSeconds = Math.floor(total / 1000);
+    return {
+      days: Math.floor(totalSeconds / 86400),
+      hours: Math.floor((totalSeconds % 86400) / 3600),
+      minutes: Math.floor((totalSeconds % 3600) / 60),
+      seconds: totalSeconds % 60,
+    };
+  }
+
+  function renderShellText() {
+    document.title = `${config.names.display} 的纪念日`;
+    refs.brandName.textContent = config.names.display;
+    refs.heroEyebrow.textContent = config.hero.eyebrow;
+    refs.heroTitle.textContent = config.hero.title;
+    refs.heroNote.textContent = config.hero.note;
+    refs.letterTitle.textContent = config.letter.title;
+    refs.letterBody.textContent = config.letter.body;
+    refs.calendarTitle.textContent = config.calendar.title;
+    refs.calendarSubtitle.textContent = config.calendar.subtitle;
+    refs.footerText.textContent = config.footer;
+  }
+
+  function renderLoveClock(now = new Date()) {
+    const parts = getClockParts(now);
+    refs.daysTogether.textContent = String(parts.days);
+    refs.hoursTogether.textContent = pad(parts.hours);
+    refs.minutesTogether.textContent = pad(parts.minutes);
+    refs.secondsTogether.textContent = pad(parts.seconds);
+    setDigitClass(refs.daysCard, parts.days);
+  }
+
+  function renderCalendar() {
+    const marksByMonth = new Map();
+    config.calendar.featured.forEach((event) => {
+      const key = String(event.month);
+      if (!marksByMonth.has(key)) marksByMonth.set(key, []);
+      marksByMonth.get(key).push(event);
+    });
+
+    refs.calendarBoard.innerHTML = Array.from({ length: 12 }, (_, index) => {
+      const month = index + 1;
+      const marks = marksByMonth.get(String(month)) || [];
+      return `
+        <article class="calendar-month ${marks.length ? "has-marks" : ""} month-${month}">
+          <div class="month-label">${pad(month)}月</div>
+          <div class="month-marks">
+            ${
+              marks.length
+                ? marks
+                    .map(
+                      (mark) => `
+                        <span class="date-pill tone-${mark.tone}">
+                          <b>${pad(mark.day)}</b>${escapeHtml(mark.label)}
+                        </span>
+                      `,
+                    )
+                    .join("")
+                : '<span class="date-empty">等待好日子</span>'
+            }
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderMoments(now = new Date()) {
+    refs.momentGrid.innerHTML = config.anniversaries
+      .map((moment, index) => {
+        const target = resolveMomentDate(moment, now);
+        const isElapsedType = moment.type === "elapsed";
+        const isPastCountdown = !isElapsedType && moment.type !== "yearly" && target < startOfToday(now);
+        const elapsed = isElapsedType || isPastCountdown;
+        const days = elapsed
+          ? Math.max(0, Math.floor((startOfToday(now) - startOfToday(target)) / 86400000))
+          : Math.max(0, dayDiff(now, target));
+        const meta = elapsed ? formatDate(moment.date) : formatMonthDay(moment);
+        const label = elapsed ? "已经" : "还剩";
+        const tone = moment.tone || ["peach", "rose", "blue", "gold"][index % 4];
+        return `
+          <article class="moment-card pet-card tone-card-${tone} ${digitClass(days)}">
+            <div class="moment-sticker" aria-hidden="true"></div>
+            <div class="moment-icon">${icons[moment.icon] || icons.heart}</div>
+            <div class="moment-main">
+              <h3>${escapeHtml(moment.title)}</h3>
+              <p>${escapeHtml(meta)}</p>
+              <small>${escapeHtml(moment.note)}</small>
+            </div>
+            <div class="moment-count" aria-label="${label} ${days} 天">
+              <strong>${days}</strong>
+              <span>天</span>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+    observeReveal();
+    hydrateInteractive();
+  }
+
+  function renderTimeline() {
+    refs.timelineList.innerHTML = config.timeline
+      .map(
+        (item) => `
+          <article class="timeline-item">
+            <time>${escapeHtml(formatDate(item.date))}</time>
+            <div class="paper-note">
+              <h3>${escapeHtml(item.title)}</h3>
+              <p>${escapeHtml(item.text)}</p>
+            </div>
+          </article>
+        `,
+      )
+      .join("");
+  }
+
+  function renderWishes() {
+    refs.wishList.innerHTML = config.defaultWishes
+      .map(
+        (wish) => `
+          <li>
+            <span class="wish-item">
+              <span class="wish-heart" aria-hidden="true">♡</span>
+              <span>${escapeHtml(wish.text)}</span>
+            </span>
+          </li>
+        `,
+      )
+      .join("");
+    hydrateInteractive();
+  }
+
+  function addRipple(element, event) {
+    const rect = element.getBoundingClientRect();
+    const x = event.clientX ? event.clientX - rect.left : rect.width / 2;
+    const y = event.clientY ? event.clientY - rect.top : rect.height / 2;
+    const ripple = document.createElement("span");
+    ripple.className = "liquid-ripple";
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
+    ripple.style.setProperty("--ripple-size", `${Math.max(rect.width, rect.height) * 1.35}px`);
+    element.appendChild(ripple);
+    window.setTimeout(() => ripple.remove(), 520);
+  }
+
+  function syncPointer(element, event) {
+    const rect = element.getBoundingClientRect();
+    const point = event.touches ? event.touches[0] : event;
+    if (!point) return;
+    const x = ((point.clientX - rect.left) / rect.width) * 100;
+    const y = ((point.clientY - rect.top) / rect.height) * 100;
+    element.style.setProperty("--pointer-x", `${Math.max(0, Math.min(100, x))}%`);
+    element.style.setProperty("--pointer-y", `${Math.max(0, Math.min(100, y))}%`);
+  }
+
+  function resetPointer(element) {
+    element.classList.remove("is-pressing");
+    element.style.setProperty("--pointer-x", "50%");
+    element.style.setProperty("--pointer-y", "50%");
+  }
+
+  function hydrateInteractive() {
+    const surfaces = document.querySelectorAll(".soft-glass, .interactive-liquid, .wish-item");
+    surfaces.forEach((element) => {
+      if (element.dataset.liquidReady) return;
+      element.dataset.liquidReady = "true";
+      element.addEventListener("pointermove", (event) => syncPointer(element, event));
+      element.addEventListener("pointerenter", (event) => syncPointer(element, event));
+      element.addEventListener("pointerdown", (event) => {
+        syncPointer(element, event);
+        element.classList.add("is-pressing");
+      });
+      element.addEventListener("pointerup", () => element.classList.remove("is-pressing"));
+      element.addEventListener("pointercancel", () => resetPointer(element));
+      element.addEventListener("pointerleave", () => resetPointer(element));
+    });
+
+    document.querySelectorAll(".interactive-liquid").forEach((element) => {
+      if (element.dataset.rippleReady) return;
+      element.dataset.rippleReady = "true";
+      element.addEventListener("click", (event) => addRipple(element, event));
+    });
+  }
+
+  function showBrandBurst(event) {
+    event.preventDefault();
+    const words = ["幸福 +1", "喜欢 +1", "今日份心动", "抱抱 +1"];
+    const rect = refs.brandLoveButton.getBoundingClientRect();
+    for (let index = 0; index < 5; index += 1) {
+      const pop = document.createElement("span");
+      pop.className = "brand-pop";
+      pop.textContent = index === 0 ? words[Math.floor(Math.random() * words.length)] : "♡";
+      const x = rect.left + rect.width * (0.28 + Math.random() * 0.48);
+      const y = rect.top + rect.height * (0.28 + Math.random() * 0.42);
+      pop.style.left = `${x}px`;
+      pop.style.top = `${y}px`;
+      pop.style.setProperty("--pop-x", `${Math.round((Math.random() - 0.5) * 80)}px`);
+      pop.style.setProperty("--pop-y", `${Math.round(-34 - Math.random() * 44)}px`);
+      pop.style.animationDelay = `${index * 36}ms`;
+      document.body.appendChild(pop);
+      window.setTimeout(() => pop.remove(), 980);
+    }
+  }
+
+  function unlock() {
+    refs.gateForm.classList.add("is-unlocking");
+    refs.gate.classList.add("is-hidden");
+    refs.site.classList.remove("is-locked");
+    sessionStorage.setItem(storageKeys.unlocked, "true");
+    window.setTimeout(() => {
+      refs.gate.setAttribute("hidden", "");
+    }, 720);
+  }
+
+  function setupGate() {
+    if (sessionStorage.getItem(storageKeys.unlocked) === "true") {
+      refs.site.classList.remove("is-locked");
+      refs.gate.setAttribute("hidden", "");
+      return;
+    }
+
+    refs.gateForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const attempt = refs.passwordInput.value.trim();
+      if (attempt === config.password) {
+        refs.gateMessage.textContent = "欢迎回到我们的小窝。";
+        unlock();
+        return;
+      }
+      refs.gateMessage.textContent = "暗号不对，再想想那个特别的数字。";
+      refs.gateForm.classList.remove("is-shaking");
+      refs.gateForm.offsetHeight;
+      refs.gateForm.classList.add("is-shaking");
+      refs.passwordInput.select();
+    });
+  }
+
+  function setupBrandLove() {
+    refs.brandLoveButton.addEventListener("click", showBrandBurst);
+  }
+
+  function observeReveal() {
+    if (!revealObserver) return;
+    const elements = document.querySelectorAll(
+      ".section, .moment-card, .timeline-item, .wish-card, .anniversary-calendar",
+    );
+    elements.forEach((element) => {
+      if (element.dataset.revealReady) return;
+      element.dataset.revealReady = "true";
+      revealObserver.observe(element);
+    });
+  }
+
+  function setupReveal() {
+    revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+          }
+        });
+      },
+      { threshold: 0.12 },
+    );
+    observeReveal();
+  }
+
+  function boot() {
+    renderShellText();
+    renderLoveClock();
+    renderCalendar();
+    renderMoments();
+    renderTimeline();
+    renderWishes();
+    setupGate();
+    setupBrandLove();
+    setupReveal();
+    hydrateInteractive();
+    window.setInterval(renderLoveClock, 1000);
+  }
+
+  boot();
+
+  window.ourDaysTest = {
+    getClockParts,
+    digitClass,
+    renderLoveClock,
+    renderMoments,
+    resolveMomentDate,
+    dayDiff,
+  };
+})();
