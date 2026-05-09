@@ -68,6 +68,8 @@
     footerText: $("#footerText"),
   };
 
+  const burstGlyphs = ["♡", "✦", "♡", "✧", "♡", "✦"];
+
   function pad(value) {
     return String(value).padStart(2, "0");
   }
@@ -79,6 +81,51 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function shouldReduceMotion() {
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function getBurstOrigin(element, event) {
+    const rect = element.getBoundingClientRect();
+    const hasPointer = event
+      && typeof event.clientX === "number"
+      && typeof event.clientY === "number"
+      && event.detail !== 0;
+    return {
+      x: hasPointer ? event.clientX : rect.left + rect.width / 2,
+      y: hasPointer ? event.clientY : rect.top + rect.height / 2,
+    };
+  }
+
+  function addCuteBurst(element, event, options = {}) {
+    if (!element || shouldReduceMotion()) return;
+
+    const origin = getBurstOrigin(element, event);
+    const count = options.count || 5;
+    const tone = options.tone || "rose";
+    const spread = count > 1 ? 120 / (count - 1) : 0;
+
+    for (let index = 0; index < count; index += 1) {
+      const particle = document.createElement("span");
+      const angle = (210 + spread * index + (Math.random() - 0.5) * 18) * (Math.PI / 180);
+      const distance = 34 + Math.random() * 34;
+      const delay = index * 18;
+      particle.className = `cute-burst-particle tone-${tone}`;
+      particle.setAttribute("aria-hidden", "true");
+      particle.textContent = burstGlyphs[(index + Math.floor(Math.random() * burstGlyphs.length)) % burstGlyphs.length];
+      particle.style.left = `${origin.x}px`;
+      particle.style.top = `${origin.y}px`;
+      particle.style.setProperty("--burst-x", `${Math.round(Math.cos(angle) * distance)}px`);
+      particle.style.setProperty("--burst-y", `${Math.round(Math.sin(angle) * distance)}px`);
+      particle.style.setProperty("--burst-rotate", `${Math.round((Math.random() - 0.5) * 72)}deg`);
+      particle.style.setProperty("--burst-scale", `${(0.88 + Math.random() * 0.42).toFixed(2)}`);
+      particle.style.animationDelay = `${delay}ms`;
+      document.body.appendChild(particle);
+      particle.addEventListener("animationend", () => particle.remove(), { once: true });
+      window.setTimeout(() => particle.remove(), 1300 + delay);
+    }
   }
 
   function parseLocalDate(date) {
@@ -317,7 +364,7 @@
       const monthKey = getCalendarMonthKey(activeCalendarYear, month);
       const isLit = litCalendarMonthIds.has(monthKey);
       return `
-        <article class="calendar-month ${marks.length ? "has-marks" : ""} ${isLit ? "is-lit" : ""} month-${month}" role="button" tabindex="0" aria-pressed="${isLit ? "true" : "false"}" data-calendar-month-id="${escapeHtml(monthKey)}" style="--month-index: ${index};">
+        <article class="calendar-month ${marks.length ? "has-marks" : ""} ${isLit ? "is-lit" : ""} month-${month}" role="button" tabindex="0" aria-pressed="${isLit ? "true" : "false"}" data-calendar-month-id="${escapeHtml(monthKey)}" style="--month-index: ${index}; --stagger-index: ${index};">
           <span class="month-heart" aria-hidden="true">♡</span>
           <div class="month-label">${pad(month)}月</div>
           <div class="month-marks">
@@ -381,7 +428,7 @@
     window.setTimeout(() => pop.remove(), 720);
   }
 
-  function toggleCalendarMonth(card) {
+  function toggleCalendarMonth(card, event) {
     const litCalendarMonthIds = getLitCalendarMonthIds();
     const monthId = card.dataset.calendarMonthId;
     const isLit = !litCalendarMonthIds.has(monthId);
@@ -394,15 +441,16 @@
     card.classList.toggle("is-lit", isLit);
     card.setAttribute("aria-pressed", String(isLit));
     addCalendarHeartPop(card);
+    addCuteBurst(card, event, { count: isLit ? 6 : 4, tone: "calendar" });
   }
 
   function setupCalendarMonthInteractions() {
     refs.calendarBoard.querySelectorAll(".calendar-month").forEach((card) => {
-      card.addEventListener("click", () => toggleCalendarMonth(card));
+      card.addEventListener("click", (event) => toggleCalendarMonth(card, event));
       card.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
-        toggleCalendarMonth(card);
+        toggleCalendarMonth(card, event);
       });
     });
   }
@@ -425,7 +473,7 @@
         const isLit = litMomentIds.has(momentKey);
         const iconSrc = iconAssets[moment.icon];
         return `
-          <article class="moment-card pet-card tone-card-${tone} ${digitClass(days)} ${isLit ? "is-lit" : ""}" role="button" tabindex="0" aria-pressed="${isLit ? "true" : "false"}" data-moment-id="${escapeHtml(momentKey)}">
+          <article class="moment-card pet-card tone-card-${tone} ${digitClass(days)} ${isLit ? "is-lit" : ""}" role="button" tabindex="0" aria-pressed="${isLit ? "true" : "false"}" data-moment-id="${escapeHtml(momentKey)}" style="--stagger-index: ${index};">
             <div class="moment-sticker" aria-hidden="true"></div>
             <div class="moment-icon">
               ${iconSrc ? `<img src="${iconSrc}" alt="" loading="lazy" />` : icons[moment.icon] || icons.heart}
@@ -448,7 +496,7 @@
     hydrateInteractive();
   }
 
-  function toggleMomentCard(card) {
+  function toggleMomentCard(card, event) {
     const litMomentIds = getLitMomentIds();
     const momentId = card.dataset.momentId;
     const isLit = !litMomentIds.has(momentId);
@@ -460,15 +508,16 @@
     saveLitMomentIds(litMomentIds);
     card.classList.toggle("is-lit", isLit);
     card.setAttribute("aria-pressed", String(isLit));
+    addCuteBurst(card, event, { count: isLit ? 6 : 4, tone: "moment" });
   }
 
   function setupMomentInteractions() {
     refs.momentGrid.querySelectorAll(".moment-card").forEach((card) => {
-      card.addEventListener("click", () => toggleMomentCard(card));
+      card.addEventListener("click", (event) => toggleMomentCard(card, event));
       card.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
-        toggleMomentCard(card);
+        toggleMomentCard(card, event);
       });
     });
   }
@@ -476,8 +525,8 @@
   function renderTimeline() {
     refs.timelineList.innerHTML = config.timeline
       .map(
-        (item) => `
-          <article class="timeline-item">
+        (item, index) => `
+          <article class="timeline-item" style="--stagger-index: ${index};">
             <time>${escapeHtml(formatDate(item.date))}</time>
             <div class="paper-note">
               <h3>${escapeHtml(item.title)}</h3>
@@ -493,9 +542,9 @@
     const litWishIds = getLitWishIds();
     refs.wishList.innerHTML = config.defaultWishes
       .map(
-        (wish) => `
+        (wish, index) => `
           <li>
-            <button class="wish-item ${litWishIds.has(wish.id) ? "is-lit" : ""}" type="button" data-wish-id="${escapeHtml(wish.id)}" aria-pressed="${litWishIds.has(wish.id) ? "true" : "false"}">
+            <button class="wish-item ${litWishIds.has(wish.id) ? "is-lit" : ""}" type="button" data-wish-id="${escapeHtml(wish.id)}" aria-pressed="${litWishIds.has(wish.id) ? "true" : "false"}" style="--stagger-index: ${index};">
               <span class="wish-heart" aria-hidden="true">♡</span>
               <span>${escapeHtml(wish.text)}</span>
             </button>
@@ -509,7 +558,7 @@
 
   function setupWishInteractions() {
     refs.wishList.querySelectorAll(".wish-item").forEach((button) => {
-      button.addEventListener("click", () => {
+      button.addEventListener("click", (event) => {
         const litWishIds = getLitWishIds();
         const wishId = button.dataset.wishId;
         const isLit = !litWishIds.has(wishId);
@@ -521,6 +570,7 @@
         saveLitWishIds(litWishIds);
         button.classList.toggle("is-lit", isLit);
         button.setAttribute("aria-pressed", String(isLit));
+        addCuteBurst(button, event, { count: isLit ? 6 : 4, tone: "wish" });
       });
     });
   }
@@ -582,22 +632,7 @@
   function showBrandBurst(event) {
     event.preventDefault();
     setBrandLit(true);
-    const words = ["♡", "喜欢 +1", "✦"];
-    const rect = refs.brandLoveButton.getBoundingClientRect();
-    for (let index = 0; index < 3; index += 1) {
-      const pop = document.createElement("span");
-      pop.className = "brand-pop";
-      pop.textContent = words[index];
-      const x = rect.left + rect.width * (0.28 + Math.random() * 0.48);
-      const y = rect.top + rect.height * (0.28 + Math.random() * 0.42);
-      pop.style.left = `${x}px`;
-      pop.style.top = `${y}px`;
-      pop.style.setProperty("--pop-x", `${Math.round((Math.random() - 0.5) * 80)}px`);
-      pop.style.setProperty("--pop-y", `${Math.round(-34 - Math.random() * 44)}px`);
-      pop.style.animationDelay = `${index * 36}ms`;
-      document.body.appendChild(pop);
-      window.setTimeout(() => pop.remove(), 980);
-    }
+    addCuteBurst(refs.brandLoveButton, event, { count: 6, tone: "brand" });
   }
 
   function setBrandLit(isLit) {
