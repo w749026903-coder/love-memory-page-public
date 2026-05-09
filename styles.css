@@ -26,6 +26,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
@@ -608,6 +612,8 @@ button {
 }
 
 .hero-title {
+  position: relative;
+  z-index: 1;
   display: block;
   max-width: 5.65em;
   font-size: clamp(3rem, 7.2vw, 6.35rem);
@@ -615,12 +621,31 @@ button {
   text-wrap: balance;
 }
 
+.hero-title.romantic-title::before {
+  display: none;
+}
+
 .hero-title-wrap {
   position: relative;
+  isolation: isolate;
   width: min(820px, 100%);
 }
 
+.hero-title-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -58px -92px -42px -58px;
+  z-index: 0;
+  pointer-events: none;
+  background: url("./assets/images/hero-title-flourish.jpg") center / contain no-repeat;
+  opacity: 0.4;
+  filter: saturate(0.96) drop-shadow(0 24px 34px rgba(111, 76, 85, 0.08));
+  transform: rotate(-1.5deg);
+}
+
 .hero-title-stickers {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 10px;
   align-items: center;
@@ -750,7 +775,7 @@ button {
 .warm-section {
   position: relative;
   z-index: 2;
-  margin-top: -54px;
+  margin-top: 0;
   padding: clamp(50px, 7vw, 82px) clamp(20px, 4vw, 50px);
   border: 2px solid rgba(111, 76, 85, 0.1);
   border-radius: 36px;
@@ -1105,7 +1130,8 @@ button {
     opacity 0.7s ease,
     transform 0.7s ease,
     box-shadow 0.24s ease,
-    border-color 0.24s ease;
+    border-color 0.24s ease,
+    background 0.24s ease;
 }
 
 .pet-card {
@@ -1175,12 +1201,57 @@ button {
   border-radius: 50%;
   color: #5f4651;
   box-shadow: 0 10px 18px rgba(97, 63, 75, 0.08);
+  overflow: hidden;
+  transition:
+    transform 0.24s ease,
+    border-color 0.24s ease,
+    box-shadow 0.24s ease;
+}
+
+.moment-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  transform: scale(1.04);
 }
 
 .moment-icon svg {
   width: 25px;
   height: 25px;
   fill: currentColor;
+}
+
+.moment-card.is-lit {
+  transform: translateY(-5px);
+  border-color: rgba(217, 109, 137, 0.38);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 244, 179, 0.54), transparent 34%),
+    linear-gradient(135deg, rgba(255, 247, 252, 0.96), rgba(246, 253, 255, 0.92)),
+    var(--paper);
+  box-shadow:
+    0 0 0 4px rgba(255, 214, 226, 0.34),
+    0 20px 38px rgba(217, 109, 137, 0.16),
+    0 10px 24px rgba(153, 210, 238, 0.14);
+  animation: momentLitPop 0.42s ease both;
+}
+
+.moment-card.is-lit .moment-icon {
+  transform: translateY(-2px) scale(1.08);
+  border-color: rgba(217, 109, 137, 0.36);
+  box-shadow:
+    0 0 0 5px rgba(255, 230, 239, 0.74),
+    0 14px 24px rgba(217, 109, 137, 0.18);
+}
+
+.moment-card.is-lit .moment-sticker {
+  opacity: 0.5;
+}
+
+.moment-card.is-lit .moment-count strong,
+.moment-card.is-lit .moment-count span {
+  color: #c94e71;
 }
 
 .moment-main {
@@ -1575,6 +1646,18 @@ button {
   }
 }
 
+@keyframes momentLitPop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  48% {
+    transform: translateY(-8px) scale(1.012);
+  }
+  100% {
+    transform: translateY(-5px) scale(1);
+  }
+}
+
 @media (max-width: 1180px) {
   .moment-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1702,6 +1785,11 @@ button {
     overflow-wrap: anywhere;
   }
 
+  .hero-title-wrap::before {
+    inset: -34px -48px -26px -34px;
+    opacity: 0.32;
+  }
+
   .hero-title-stickers {
     gap: 8px;
     margin-top: 10px;
@@ -1786,5 +1874,9 @@ button {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .moment-card.is-lit {
+    animation: none !important;
   }
 }

@@ -4,6 +4,7 @@
     unlocked: "our-days-unlocked",
     brandLit: "our-days-brand-lit",
     litWishes: "our-days-lit-wishes",
+    litMoments: "our-days-lit-moments",
   };
   const calendarYears = Array.isArray(config.calendar.years) && config.calendar.years.length
     ? config.calendar.years
@@ -25,6 +26,15 @@
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.1 3.3c3.2 0 5.7 2.1 5.7 4.8 0 2.5-2.1 4.5-4.9 4.8v2.4c2.3-.9 4.9-.5 7 1.2-2.5 2.3-5.4 2.7-7.8 1.2V22h-1.8v-4.3c-2.4 1.5-5.3 1.1-7.8-1.2 2.1-1.7 4.7-2.1 7-1.2v-2.4c-2.8-.4-4.9-2.4-4.9-4.8 0-2.7 2.4-4.8 5.7-4.8h1.8Z"/></svg>',
     cake:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c1.1 1.2 1.7 2.3 1.7 3.3a1.7 1.7 0 1 1-3.4 0c0-1 .6-2.1 1.7-3.3ZM5.2 10.7h13.6a2 2 0 0 1 2 2v7.1H3.2v-7.1a2 2 0 0 1 2-2Zm.2 5.5v1.9h13.2v-1.9c-.8.4-1.7.4-2.5-.1a2.8 2.8 0 0 1-3.1 0 2.8 2.8 0 0 1-3.1 0 2.8 2.8 0 0 1-3.1 0c-.5.3-1 .4-1.4.1ZM8 7.3h8v2H8v-2Z"/></svg>',
+  };
+
+  const iconAssets = {
+    paw: "./assets/images/moment-icon-paw.jpg",
+    hug: "./assets/images/moment-icon-hug.jpg",
+    heart: "./assets/images/moment-icon-heart.jpg",
+    spark: "./assets/images/moment-icon-spark.jpg",
+    rose: "./assets/images/moment-icon-rose.jpg",
+    cake: "./assets/images/moment-icon-cake.jpg",
   };
 
   const $ = (selector) => document.querySelector(selector);
@@ -197,6 +207,24 @@
     localStorage.setItem(storageKeys.litWishes, JSON.stringify(Array.from(ids)));
   }
 
+  function getLitMomentIds() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(storageKeys.litMoments) || "[]");
+      return new Set(Array.isArray(stored) ? stored : []);
+    } catch (error) {
+      return new Set();
+    }
+  }
+
+  function saveLitMomentIds(ids) {
+    localStorage.setItem(storageKeys.litMoments, JSON.stringify(Array.from(ids)));
+  }
+
+  function getMomentKey(moment, index) {
+    const dateKey = moment.date || `${moment.month || "x"}-${moment.day || "x"}`;
+    return `${index}-${dateKey}-${moment.title}`;
+  }
+
   function digitClass(value) {
     const length = String(Math.abs(Number(value) || 0)).length;
     if (length >= 5) return "digits-5";
@@ -309,6 +337,7 @@
   }
 
   function renderMoments(now = new Date()) {
+    const litMomentIds = getLitMomentIds();
     refs.momentGrid.innerHTML = config.anniversaries
       .map((moment, index) => {
         const target = resolveMomentDate(moment, now);
@@ -321,10 +350,15 @@
         const meta = elapsed ? formatDate(moment.date) : formatMonthDay(moment);
         const label = elapsed ? "已经" : "还剩";
         const tone = moment.tone || ["peach", "rose", "blue", "gold"][index % 4];
+        const momentKey = getMomentKey(moment, index);
+        const isLit = litMomentIds.has(momentKey);
+        const iconSrc = iconAssets[moment.icon];
         return `
-          <article class="moment-card pet-card tone-card-${tone} ${digitClass(days)}">
+          <article class="moment-card pet-card tone-card-${tone} ${digitClass(days)} ${isLit ? "is-lit" : ""}" role="button" tabindex="0" aria-pressed="${isLit ? "true" : "false"}" data-moment-id="${escapeHtml(momentKey)}">
             <div class="moment-sticker" aria-hidden="true"></div>
-            <div class="moment-icon">${icons[moment.icon] || icons.heart}</div>
+            <div class="moment-icon">
+              ${iconSrc ? `<img src="${iconSrc}" alt="" loading="lazy" />` : icons[moment.icon] || icons.heart}
+            </div>
             <div class="moment-main">
               <h3>${escapeHtml(moment.title)}</h3>
               <p>${escapeHtml(meta)}</p>
@@ -339,7 +373,33 @@
       })
       .join("");
     observeReveal();
+    setupMomentInteractions();
     hydrateInteractive();
+  }
+
+  function toggleMomentCard(card) {
+    const litMomentIds = getLitMomentIds();
+    const momentId = card.dataset.momentId;
+    const isLit = !litMomentIds.has(momentId);
+    if (isLit) {
+      litMomentIds.add(momentId);
+    } else {
+      litMomentIds.delete(momentId);
+    }
+    saveLitMomentIds(litMomentIds);
+    card.classList.toggle("is-lit", isLit);
+    card.setAttribute("aria-pressed", String(isLit));
+  }
+
+  function setupMomentInteractions() {
+    refs.momentGrid.querySelectorAll(".moment-card").forEach((card) => {
+      card.addEventListener("click", () => toggleMomentCard(card));
+      card.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        toggleMomentCard(card);
+      });
+    });
   }
 
   function renderTimeline() {
@@ -426,7 +486,7 @@
   }
 
   function hydrateInteractive() {
-    const surfaces = document.querySelectorAll(".soft-glass, .interactive-liquid, .wish-item");
+    const surfaces = document.querySelectorAll(".soft-glass, .interactive-liquid, .wish-item, .moment-card");
     surfaces.forEach((element) => {
       if (element.dataset.liquidReady) return;
       element.dataset.liquidReady = "true";
