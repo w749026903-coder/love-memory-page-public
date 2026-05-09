@@ -30,6 +30,15 @@
   display: none !important;
 }
 
+:where(a, button, [role="button"], input, .interactive-liquid, .wish-item, .moment-card, .paper-note, .calendar-month) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(a, button, [role="button"]):focus-visible {
+  outline: 3px solid rgba(153, 210, 238, 0.7);
+  outline-offset: 4px;
+}
+
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
@@ -89,7 +98,9 @@ button {
 
 .soft-glass,
 .interactive-liquid,
-.wish-item {
+.wish-item,
+.paper-note,
+.calendar-month {
   --pointer-x: 50%;
   --pointer-y: 50%;
   position: relative;
@@ -99,7 +110,9 @@ button {
 
 .soft-glass::before,
 .interactive-liquid::before,
-.wish-item::before {
+.wish-item::before,
+.paper-note::before,
+.calendar-month::before {
   content: "";
   position: absolute;
   inset: -8%;
@@ -123,9 +136,13 @@ button {
 .soft-glass:hover::before,
 .interactive-liquid:hover::before,
 .wish-item:hover::before,
+.paper-note:hover::before,
+.calendar-month:hover::before,
 .soft-glass.is-pressing::before,
 .interactive-liquid.is-pressing::before,
-.wish-item.is-pressing::before {
+.wish-item.is-pressing::before,
+.paper-note.is-pressing::before,
+.calendar-month.is-pressing::before {
   opacity: 1;
   transform: scale(1);
 }
@@ -577,6 +594,7 @@ button {
   border-radius: 50%;
   color: #d96d89;
   background: #fff3f7;
+  line-height: 1;
   transition:
     transform 0.22s ease,
     color 0.22s ease,
@@ -932,6 +950,7 @@ button {
 
 .calendar-board {
   display: block;
+  margin-top: 18px;
 }
 
 .calendar-year-switcher {
@@ -961,11 +980,19 @@ button {
   box-shadow: 0 8px 16px rgba(97, 63, 75, 0.07);
   font-size: 1.55rem;
   font-weight: 950;
+  line-height: 1;
+  padding: 0;
   cursor: pointer;
   transition:
     transform 0.18s ease,
     border-color 0.18s ease,
     background 0.18s ease;
+}
+
+.calendar-nav span {
+  display: block;
+  line-height: 1;
+  transform: translateY(-1px);
 }
 
 .calendar-nav:not(:disabled):hover {
@@ -990,6 +1017,15 @@ button {
   line-height: 1.55 !important;
 }
 
+.calendar-board.is-leaving {
+  animation: calendarBoardOut 0.15s ease forwards;
+}
+
+.calendar-board.is-entering .calendar-year-switcher,
+.calendar-board.is-entering .calendar-year-note {
+  animation: calendarPanelIn 0.36s cubic-bezier(0.2, 0.8, 0.22, 1) both;
+}
+
 .calendar-months {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1004,15 +1040,22 @@ button {
   padding: 11px;
   background: #fff8fa;
   box-shadow: 0 8px 16px rgba(97, 63, 75, 0.06);
+  cursor: pointer;
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
 .calendar-month::after {
-  content: "♡";
+  content: "";
   position: absolute;
-  right: 10px;
-  top: 6px;
-  color: rgba(239, 143, 169, 0.28);
-  font-weight: 950;
+  inset: 1px;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.62);
 }
 
 .calendar-month:nth-child(3n + 1) {
@@ -1029,6 +1072,70 @@ button {
 
 .calendar-month.has-marks {
   border-color: rgba(237, 198, 109, 0.42);
+}
+
+.calendar-month:hover,
+.calendar-month.is-pressing {
+  transform: translateY(-2px);
+  border-color: rgba(217, 109, 137, 0.3);
+  background: #fff;
+  box-shadow: 0 14px 26px rgba(97, 63, 75, 0.1);
+}
+
+.calendar-month.is-lit {
+  border-color: rgba(217, 109, 137, 0.38);
+  background:
+    radial-gradient(circle at 86% 18%, rgba(255, 220, 231, 0.7), transparent 28%),
+    #fffdf8;
+  box-shadow:
+    0 0 0 3px rgba(255, 214, 226, 0.26),
+    0 15px 28px rgba(217, 109, 137, 0.12);
+}
+
+.calendar-board.is-entering .calendar-month {
+  animation: calendarMonthIn 0.42s cubic-bezier(0.2, 0.8, 0.22, 1) both;
+  animation-delay: calc(var(--month-index, 0) * 24ms);
+}
+
+.month-heart {
+  position: absolute;
+  right: 10px;
+  top: 6px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: rgba(217, 109, 137, 0.34);
+  background: rgba(255, 253, 248, 0.42);
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1;
+  transition:
+    transform 0.22s ease,
+    color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.calendar-month.is-lit .month-heart {
+  color: #c94e71;
+  background: rgba(255, 240, 246, 0.94);
+  box-shadow: 0 8px 16px rgba(217, 109, 137, 0.16);
+  transform: scale(1.12);
+}
+
+.calendar-heart-pop {
+  position: absolute;
+  right: 14px;
+  top: 10px;
+  z-index: 3;
+  color: #c94e71;
+  font-size: 1rem;
+  font-weight: 950;
+  pointer-events: none;
+  animation: calendarHeartPop 0.7s ease forwards;
 }
 
 .month-label {
@@ -1361,6 +1468,21 @@ button {
   border-radius: 22px;
   background: #fffdf8;
   box-shadow: var(--small-shadow);
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.paper-note:hover,
+.paper-note.is-pressing {
+  transform: translateY(-3px);
+  border-color: rgba(153, 210, 238, 0.42);
+  background:
+    radial-gradient(circle at var(--pointer-x) var(--pointer-y), rgba(255, 220, 231, 0.32), transparent 34%),
+    #fff;
+  box-shadow: 0 18px 34px rgba(97, 63, 75, 0.12);
 }
 
 .paper-note h3 {
@@ -1458,6 +1580,7 @@ button {
   color: #d96d89;
   font-size: 1.2rem;
   font-weight: 950;
+  line-height: 1;
   transition:
     transform 0.22s ease,
     color 0.22s ease;
@@ -1655,6 +1778,54 @@ button {
   }
   100% {
     transform: translateY(-5px) scale(1);
+  }
+}
+
+@keyframes calendarBoardOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(calc(var(--calendar-direction, 1) * -12px));
+  }
+}
+
+@keyframes calendarPanelIn {
+  0% {
+    opacity: 0;
+    transform: translateX(calc(var(--calendar-direction, 1) * 16px));
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes calendarMonthIn {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes calendarHeartPop {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.7);
+  }
+  24% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-28px) scale(0.92);
   }
 }
 
@@ -1876,7 +2047,12 @@ button {
     transition-duration: 0.01ms !important;
   }
 
-  .moment-card.is-lit {
+  .moment-card.is-lit,
+  .calendar-board.is-leaving,
+  .calendar-board.is-entering .calendar-year-switcher,
+  .calendar-board.is-entering .calendar-year-note,
+  .calendar-board.is-entering .calendar-month,
+  .calendar-heart-pop {
     animation: none !important;
   }
 }

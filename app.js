@@ -5,6 +5,7 @@
     brandLit: "our-days-brand-lit",
     litWishes: "our-days-lit-wishes",
     litMoments: "our-days-lit-moments",
+    litCalendarMonths: "our-days-lit-calendar-months",
   };
   const calendarYears = Array.isArray(config.calendar.years) && config.calendar.years.length
     ? config.calendar.years
@@ -60,7 +61,6 @@
     letterTitle: $("#letterTitle"),
     letterBody: $("#letterBody"),
     calendarTitle: $("#calendarTitle"),
-    calendarSubtitle: $("#calendarSubtitle"),
     calendarBoard: $("#calendarBoard"),
     momentGrid: $("#momentGrid"),
     timelineList: $("#timelineList"),
@@ -220,9 +220,26 @@
     localStorage.setItem(storageKeys.litMoments, JSON.stringify(Array.from(ids)));
   }
 
+  function getLitCalendarMonthIds() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(storageKeys.litCalendarMonths) || "[]");
+      return new Set(Array.isArray(stored) ? stored : []);
+    } catch (error) {
+      return new Set();
+    }
+  }
+
+  function saveLitCalendarMonthIds(ids) {
+    localStorage.setItem(storageKeys.litCalendarMonths, JSON.stringify(Array.from(ids)));
+  }
+
   function getMomentKey(moment, index) {
     const dateKey = moment.date || `${moment.month || "x"}-${moment.day || "x"}`;
     return `${index}-${dateKey}-${moment.title}`;
+  }
+
+  function getCalendarMonthKey(year, month) {
+    return `${year}-${pad(month)}`;
   }
 
   function digitClass(value) {
@@ -259,7 +276,6 @@
     refs.letterTitle.textContent = config.letter.title;
     refs.letterBody.textContent = config.letter.body;
     refs.calendarTitle.textContent = config.calendar.title;
-    refs.calendarSubtitle.textContent = config.calendar.subtitle;
     refs.footerText.textContent = config.footer;
   }
 
@@ -272,11 +288,13 @@
     setDigitClass(refs.daysCard, parts.days);
   }
 
-  function renderCalendar(year = activeCalendarYear) {
+  function renderCalendar(year = activeCalendarYear, options = {}) {
+    refs.calendarBoard.classList.remove("is-leaving", "is-entering");
     activeCalendarYear = calendarYears.includes(year) ? year : calendarYears[0];
     const yearIndex = calendarYearIndex(activeCalendarYear);
     const previousYear = calendarYears[yearIndex - 1];
     const nextYear = calendarYears[yearIndex + 1];
+    const litCalendarMonthIds = getLitCalendarMonthIds();
     const marks = collectCalendarMarks(activeCalendarYear);
     const marksByMonth = new Map();
     marks.forEach((event) => {
@@ -296,8 +314,11 @@
     const months = Array.from({ length: 12 }, (_, index) => {
       const month = index + 1;
       const marks = marksByMonth.get(String(month)) || [];
+      const monthKey = getCalendarMonthKey(activeCalendarYear, month);
+      const isLit = litCalendarMonthIds.has(monthKey);
       return `
-        <article class="calendar-month ${marks.length ? "has-marks" : ""} month-${month}">
+        <article class="calendar-month ${marks.length ? "has-marks" : ""} ${isLit ? "is-lit" : ""} month-${month}" role="button" tabindex="0" aria-pressed="${isLit ? "true" : "false"}" data-calendar-month-id="${escapeHtml(monthKey)}" style="--month-index: ${index};">
+          <span class="month-heart" aria-hidden="true">♡</span>
           <div class="month-label">${pad(month)}月</div>
           <div class="month-marks">
             ${
@@ -320,18 +341,68 @@
 
     refs.calendarBoard.innerHTML = `
       <div class="calendar-year-switcher" aria-label="切换日历年份">
-        <button class="calendar-nav" type="button" data-calendar-year="${previousYear || ""}" ${previousYear ? "" : "disabled"} aria-label="上一年">‹</button>
+        <button class="calendar-nav" type="button" data-calendar-year="${previousYear || ""}" ${previousYear ? "" : "disabled"} aria-label="上一年"><span aria-hidden="true">‹</span></button>
         <strong>${activeCalendarYear}</strong>
-        <button class="calendar-nav" type="button" data-calendar-year="${nextYear || ""}" ${nextYear ? "" : "disabled"} aria-label="下一年">›</button>
+        <button class="calendar-nav" type="button" data-calendar-year="${nextYear || ""}" ${nextYear ? "" : "disabled"} aria-label="下一年"><span aria-hidden="true">›</span></button>
       </div>
       <p class="calendar-year-note">${escapeHtml(yearNote)}</p>
       <div class="calendar-months">${months}</div>
     `;
 
+    refs.calendarBoard.style.setProperty("--calendar-direction", String(options.direction || 1));
+    if (options.animate) {
+      refs.calendarBoard.classList.add("is-entering");
+      window.setTimeout(() => refs.calendarBoard.classList.remove("is-entering"), 560);
+    }
+
     refs.calendarBoard.querySelectorAll("[data-calendar-year]").forEach((button) => {
       button.addEventListener("click", () => {
         const targetYear = Number(button.dataset.calendarYear);
-        if (targetYear) renderCalendar(targetYear);
+        if (targetYear) switchCalendarYear(targetYear);
+      });
+    });
+    setupCalendarMonthInteractions();
+    hydrateInteractive();
+  }
+
+  function switchCalendarYear(targetYear) {
+    if (!calendarYears.includes(targetYear) || targetYear === activeCalendarYear) return;
+    const direction = targetYear > activeCalendarYear ? 1 : -1;
+    refs.calendarBoard.style.setProperty("--calendar-direction", String(direction));
+    refs.calendarBoard.classList.add("is-leaving");
+    window.setTimeout(() => renderCalendar(targetYear, { animate: true, direction }), 150);
+  }
+
+  function addCalendarHeartPop(card) {
+    const pop = document.createElement("span");
+    pop.className = "calendar-heart-pop";
+    pop.textContent = "♡";
+    card.appendChild(pop);
+    window.setTimeout(() => pop.remove(), 720);
+  }
+
+  function toggleCalendarMonth(card) {
+    const litCalendarMonthIds = getLitCalendarMonthIds();
+    const monthId = card.dataset.calendarMonthId;
+    const isLit = !litCalendarMonthIds.has(monthId);
+    if (isLit) {
+      litCalendarMonthIds.add(monthId);
+    } else {
+      litCalendarMonthIds.delete(monthId);
+    }
+    saveLitCalendarMonthIds(litCalendarMonthIds);
+    card.classList.toggle("is-lit", isLit);
+    card.setAttribute("aria-pressed", String(isLit));
+    addCalendarHeartPop(card);
+  }
+
+  function setupCalendarMonthInteractions() {
+    refs.calendarBoard.querySelectorAll(".calendar-month").forEach((card) => {
+      card.addEventListener("click", () => toggleCalendarMonth(card));
+      card.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        toggleCalendarMonth(card);
       });
     });
   }
@@ -425,7 +496,7 @@
         (wish) => `
           <li>
             <button class="wish-item ${litWishIds.has(wish.id) ? "is-lit" : ""}" type="button" data-wish-id="${escapeHtml(wish.id)}" aria-pressed="${litWishIds.has(wish.id) ? "true" : "false"}">
-              <span class="wish-heart" aria-hidden="true">${litWishIds.has(wish.id) ? "♥" : "♡"}</span>
+              <span class="wish-heart" aria-hidden="true">♡</span>
               <span>${escapeHtml(wish.text)}</span>
             </button>
           </li>
@@ -450,8 +521,6 @@
         saveLitWishIds(litWishIds);
         button.classList.toggle("is-lit", isLit);
         button.setAttribute("aria-pressed", String(isLit));
-        const heart = button.querySelector(".wish-heart");
-        if (heart) heart.textContent = isLit ? "♥" : "♡";
       });
     });
   }
@@ -486,7 +555,9 @@
   }
 
   function hydrateInteractive() {
-    const surfaces = document.querySelectorAll(".soft-glass, .interactive-liquid, .wish-item, .moment-card");
+    const surfaces = document.querySelectorAll(
+      ".soft-glass, .interactive-liquid, .wish-item, .moment-card, .paper-note, .calendar-month",
+    );
     surfaces.forEach((element) => {
       if (element.dataset.liquidReady) return;
       element.dataset.liquidReady = "true";
@@ -511,7 +582,7 @@
   function showBrandBurst(event) {
     event.preventDefault();
     setBrandLit(true);
-    const words = ["♥", "喜欢 +1", "✦"];
+    const words = ["♡", "喜欢 +1", "✦"];
     const rect = refs.brandLoveButton.getBoundingClientRect();
     for (let index = 0; index < 3; index += 1) {
       const pop = document.createElement("span");
@@ -532,7 +603,7 @@
   function setBrandLit(isLit) {
     refs.brandLoveButton.classList.toggle("is-lit", isLit);
     refs.brandLoveButton.setAttribute("aria-pressed", String(isLit));
-    refs.brandMark.textContent = isLit ? "♥" : "♡";
+    refs.brandMark.textContent = "♡";
     if (isLit) {
       localStorage.setItem(storageKeys.brandLit, "true");
     }

@@ -20,7 +20,6 @@ window.coupleConfig = {
     years: [2026, 2027],
     initialYear: 2026,
     title: "我们的纪念日历",
-    subtitle: "生日、相爱日、整百天和官方节假日，都会被认真圈起来。",
     pendingNoticeByYear: {
       2027: "2027 年节日日期已标出，官方放假调休待发布。",
     },
